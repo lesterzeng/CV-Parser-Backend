@@ -50,12 +50,19 @@ public class FileUploadService {
 			 * for PDF forms.
 			 */
 			case "application/pdf":
-				if (file.getOriginalFilename().endsWith(".pdf")) {
-					text = processPdf(file);
-					successCount++;
-				} else {
+				try {
+					if (file.getOriginalFilename().endsWith(".pdf")) {
+						text = processPdf(file);
+						successCount++;
+					} else {
+						failCount++;
+						UploadErrorDTO error = new UploadErrorDTO(fileName, "Unsupported file type: " + mimeType);
+//					errorList.add("File "+fileName+" is of unsupported file type: "+mimeType);
+						errorList.add(error);
+					}
+				} catch (Exception ex) {
 					failCount++;
-					UploadErrorDTO error = new UploadErrorDTO(fileName, "Unsupported file type: " + mimeType);
+					UploadErrorDTO error = new UploadErrorDTO(fileName, "File type does not match extension.");
 //					errorList.add("File "+fileName+" is of unsupported file type: "+mimeType);
 					errorList.add(error);
 				}
@@ -78,12 +85,19 @@ public class FileUploadService {
 //				break;
 			case "application/x-tika-ooxml":
 //				System.out.println("This is .docx file.");
-				if (file.getOriginalFilename().endsWith(".docx") || file.getOriginalFilename().endsWith(".doc")) {
-					text = processDoc(file);
-					successCount++;
-				} else {
+				try {
+					if (file.getOriginalFilename().endsWith(".docx") || file.getOriginalFilename().endsWith(".doc")) {
+						text = processDoc(file);
+						successCount++;
+					} else {
+						failCount++;
+						UploadErrorDTO error = new UploadErrorDTO(fileName, "Unsupported file type: " + mimeType);
+//					errorList.add("File "+fileName+" is of unsupported file type: "+mimeType);
+						errorList.add(error);
+					}
+				} catch (Exception ex) {
 					failCount++;
-					UploadErrorDTO error = new UploadErrorDTO(fileName, "Unsupported file type: " + mimeType);
+					UploadErrorDTO error = new UploadErrorDTO(fileName, "File type does not match extension.");
 //					errorList.add("File "+fileName+" is of unsupported file type: "+mimeType);
 					errorList.add(error);
 				}
