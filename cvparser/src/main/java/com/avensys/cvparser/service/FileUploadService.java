@@ -44,18 +44,41 @@ public class FileUploadService {
 			System.out.println("File type: " + mimeType);
 			String text = "";
 			switch (mimeType) {
+			/*
+			 * PDF: application/pdf Other file types that use this MIME type include XFA
+			 * (XML Forms Architecture) and FDF (Forms Data Format) files, which are used
+			 * for PDF forms.
+			 */
 			case "application/pdf":
-				text = processPdf(file);
-				successCount++;
+				if (file.getOriginalFilename().endsWith(".pdf")) {
+					text = processPdf(file);
+					successCount++;
+				} else {
+					failCount++;
+					UploadErrorDTO error = new UploadErrorDTO(fileName, "Unsupported file type: " + mimeType);
+//					errorList.add("File "+fileName+" is of unsupported file type: "+mimeType);
+					errorList.add(error);
+				}
+
 				break;
 //	            case "application/msword":
+
+			/*
+			 * DOC and DOCX: application/msword and
+			 * application/vnd.openxmlformats-officedocument.wordprocessingml.document Other
+			 * file types that use these MIME types include DOT and DOTX files, which are
+			 * Word templates. Additionally, there are several other Microsoft Office file
+			 * types that use similar MIME types, such as PPT and PPTX for PowerPoint and
+			 * XLS and XLSX for Excel.
+			 */
+
 			case "application/x-tika-msoffice":
 //				System.out.println("This is .doc file.");
 //				text = processDoc(file);
 //				break;
 			case "application/x-tika-ooxml":
 //				System.out.println("This is .docx file.");
-				if (file.getOriginalFilename().endsWith(".docx")||file.getOriginalFilename().endsWith(".doc")) {
+				if (file.getOriginalFilename().endsWith(".docx") || file.getOriginalFilename().endsWith(".doc")) {
 					text = processDoc(file);
 					successCount++;
 				} else {
