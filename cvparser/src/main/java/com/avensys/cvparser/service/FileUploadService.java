@@ -13,6 +13,7 @@ import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,6 +26,11 @@ import com.avensys.cvparser.dto.UploadErrorListDTO;
 @Component
 public class FileUploadService {
 
+	//TODO: delete after test is done
+	@Autowired
+	ParseService testService;
+	//end of delete
+	
 	public UploadErrorListDTO extractText(List<MultipartFile> files) throws IOException, TikaException, SAXException {
 //		Tika tika = new Tika();
 		List<UploadErrorDTO> errorList = new ArrayList<UploadErrorDTO>();
@@ -53,6 +59,7 @@ public class FileUploadService {
 				try {
 					if (file.getOriginalFilename().endsWith(".pdf")) {
 						text = processPdf(file);
+						testService.parsePdfFile(text);
 						successCount++;
 					} else {
 						failCount++;
@@ -112,7 +119,7 @@ public class FileUploadService {
 //				errorList.add("File "+fileName+" is of unsupported file type: "+mimeType);
 				errorList.add(error);
 			}
-			System.out.println(text);
+//			System.out.println(text);
 
 //			InputStream stream = file.getInputStream();
 //			AutoDetectParser parser = new AutoDetectParser();
@@ -133,6 +140,16 @@ public class FileUploadService {
 		String text = "";
 		try (final PDDocument document = PDDocument.load(file.getInputStream())) {
 			final PDFTextStripper pdfStripper = new PDFTextStripper();
+			
+			// TODO: Move this to parser
+			TestPDFStripper testStripper = new TestPDFStripper();
+			testStripper.setSortByPosition(true);
+			testStripper.getText(document);
+//			testStripper.finalOutput();
+			testStripper.parseInformation();
+			
+			// end of move
+			
 			text = pdfStripper.getText(document);
 		} catch (final Exception ex) {
 			ex.printStackTrace();
@@ -149,6 +166,7 @@ public class FileUploadService {
 			if (filename.endsWith(".doc")) {
 				HWPFDocument doc = new HWPFDocument(is);
 				WordExtractor extractor = new WordExtractor(doc);
+				
 				text = extractor.getText();
 			} else if (filename.endsWith(".docx")) {
 				XWPFDocument doc = new XWPFDocument(is);

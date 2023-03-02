@@ -20,39 +20,17 @@ public class ParseService {
 			try {
 				parsePdfFile(prd.getEncodedData());
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 	}
 
-	private String parsePdfFile(String fileData) throws IOException {
-		byte[] decoder = Base64.getDecoder().decode(fileData);
-//		InputStream is = new ByteArrayInputStream(decoder);
-		PDDocument pdfFile = PDDocument.load(decoder);
-		PDFTextStripper stripper = new PDFTextStripper();
-		// TODO: Check performance and toggle off if this takes too long.
-		stripper.setSortByPosition(true);
-		for (int p = 1; p <= pdfFile.getNumberOfPages(); ++p) {
-			// Set the page interval to extract. If you don't, then all pages would be extracted.
-			stripper.setStartPage(p);
-			stripper.setEndPage(p);
-
-			// let the magic happen
-			String text = stripper.getText(pdfFile);
-			// do some nice output with a header
-			String pageStr = String.format("page %d:", p);
-			System.out.println(pageStr);
-			for (int i = 0; i < pageStr.length(); ++i) {
-				System.out.print("-");
-			}
-			System.out.println();
-			System.out.println(text.trim());
-			System.out.println();
-
+	public String parsePdfFile(String fileData) throws IOException {
+		String[] lineBreak = fileData.split("\n");
+		int counter = 0;
+		for (String line: lineBreak) {
+//			System.out.println("%d: %s".formatted(counter,line));
+			counter++;
 		}
-//		InputStream decoded = java.util.Base64.getDecoder().wrap(inputStream);
-//		PDDocument.load(decoded);
-		pdfFile.close();
 		return null;
 	}
 }

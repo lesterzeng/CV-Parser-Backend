@@ -80,7 +80,7 @@ public class SecurityConfig {
 				 * password in order to access any resources on the application.
 				 */
 				// TODO: Change api parse to authenticated section
-				.requestMatchers("/api/auth/**","/api/parse/**").permitAll()
+				.requestMatchers("/api/auth/**","/api/parse/**","/api/upload/**").permitAll()
 				
 //				.hasRole("ADMIN")
 //				.hasAnyRole("USER","ADMIN")
