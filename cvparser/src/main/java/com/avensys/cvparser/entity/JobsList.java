@@ -2,6 +2,7 @@ package com.avensys.cvparser.entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
@@ -25,8 +26,8 @@ public class JobsList {
 	
 	@OneToMany(mappedBy = "jobsList", cascade = CascadeType.ALL, orphanRemoval = true)
 	// @JsonBackReference(value="EmployeeDepartments")
-//	@JsonIgnore
-	@JsonManagedReference
+	@JsonIgnore
+//	@JsonManagedReference
 	private List<CandidateEntity> candidates;
 	
 	@Column(name = "job_title")

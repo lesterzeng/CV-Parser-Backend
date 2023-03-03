@@ -28,29 +28,35 @@ public class FileUploadController {
 		UploadErrorListDTO errors = new UploadErrorListDTO();
 		try {
 			errors = fus.extractText(files);
-		} catch (Exception ex) {
+		}
+//		catch (FileSizeLimitExceededException ex) {
+//			// Handle the exception here
+//			ex.printStackTrace();
+//			System.out.println("I CAUGHT IT!");
+//		} 
+		catch (Exception ex) {
 			ex.printStackTrace();
 		}
 		// Process the uploaded files
-		
-		//DEBUG
-		if(errors.getErrors().size()>0) {
+
+		// DEBUG
+		if (errors.getErrors().size() > 0) {
 			System.out.println("Inside error list");
-			System.out.println("Success: "+errors.getSuccessCount());
-			System.out.println("Failed: "+errors.getFailCount());
-			for(UploadErrorDTO error: errors.getErrors()) {
+			System.out.println("Success: " + errors.getSuccessCount());
+			System.out.println("Failed: " + errors.getFailCount());
+			for (UploadErrorDTO error : errors.getErrors()) {
 				System.out.println(error.getFileName());
 				System.out.println(error.getErrorMessage());
 			}
 		}
-		
+
 		if (errors.getErrors().size() > 0) {
-	        // Return a Bad Request status code and the errors DTO in the response body
-	        return ResponseEntity.badRequest().body(errors);
-	    } else {
-	        // Return an OK status code with no response body
-	        return ResponseEntity.ok().build();
-	    }
+			// Return a Bad Request status code and the errors DTO in the response body
+			return ResponseEntity.badRequest().body(errors);
+		} else {
+			// Return an OK status code with no response body
+			return ResponseEntity.ok().build();
+		}
 
 //		return ResponseEntity.ok().build();
 	}
