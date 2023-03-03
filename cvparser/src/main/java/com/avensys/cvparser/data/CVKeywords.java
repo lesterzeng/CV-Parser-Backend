@@ -1,4 +1,4 @@
-package com.avensys.cvparser.utils;
+package com.avensys.cvparser.data;
 
 import java.util.HashMap;
 import java.util.Map;

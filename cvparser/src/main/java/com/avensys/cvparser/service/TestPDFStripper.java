@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
 
-import com.avensys.cvparser.utils.CVKeywords;
+import com.avensys.cvparser.data.CVKeywords;
 
 public class TestPDFStripper extends PDFTextStripper {
 
@@ -53,14 +53,19 @@ public class TestPDFStripper extends PDFTextStripper {
 		}
 		if (this.headerGroup.get(CVKeywords.PERSONAL.label) != null) {
 			processPersonal(this.headerGroup.get(CVKeywords.PERSONAL.label));
-		} else {
-			processPersonal(this.headerGroup.get("Filler"));
+			
 		}
+		processPersonal(this.headerGroup.get("Filler"));
 
 	}
 
 	private void processExperience(List<String> experiences) {
-
+		for (int i = 0; i< experiences.size(); i++) {
+			String str = experiences.get(i).strip();
+			System.out.println(i+" "+str);
+			System.out.println(str.split(" ").length);
+			
+		}
 	}
 
 	/**
@@ -85,7 +90,14 @@ public class TestPDFStripper extends PDFTextStripper {
 	}
 	
 	private void processSkill(List<String> skills) {
-		
+		for(String line: skills) {
+			String subLine = line;
+			if (line.contains(":")) {
+				subLine = subLine.replaceAll(".*:", "");
+				
+			}
+			System.out.println(subLine.split("[\\W]*"));
+		}
 	}
 
 	@Override
