@@ -49,7 +49,7 @@ public class CandidateEntity extends Auditable<String> {
 	private String phoneNumber;
 
 	@Column(name = "working_experience")
-	private String workExp;
+	private int workExp;
 
 //	@ManyToOne
 //    @JoinColumn(foreignKey = @ForeignKey(name = "jobs_list_id"), name = "jobs_list_id")
@@ -81,13 +81,13 @@ public class CandidateEntity extends Auditable<String> {
 	@ManyToOne
 //	@JsonManagedReference
 //	@JsonIgnore
-	@JsonBackReference
+//	@JsonBackReference
 //	@MapsId("employee_id") // departmentId's employee_id
 	@JoinColumn(name = "jobs_list_id") // foreign key, cover over employee_id column
 	private JobsList jobsList;
 	
 	public CandidateEntity(String email, String firstName, String midName, String lastName, String phoneNumber,
-			String workExp) {
+			int workExp) {
 		super();
 		this.email = email;
 		this.firstName = firstName;
@@ -100,5 +100,21 @@ public class CandidateEntity extends Auditable<String> {
 	public CandidateEntity(Long id) {
 		this.id = id;
 	}
+
+	public CandidateEntity(String email, String firstName, String midName, String lastName, String phoneNumber,
+			int workExp, List<Skill> skills, List<RecentCompanies> recentCompanies, JobsList jobsList) {
+		super();
+		this.email = email;
+		this.firstName = firstName;
+		this.midName = midName;
+		this.lastName = lastName;
+		this.phoneNumber = phoneNumber;
+		this.workExp = workExp;
+		this.skills = skills;
+		this.recentCompanies = recentCompanies;
+		this.jobsList = jobsList;
+	}
+	
+	
 
 }
