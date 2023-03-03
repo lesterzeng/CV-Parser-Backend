@@ -2,9 +2,13 @@ package com.avensys.cvparser.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.hwpf.HWPFDocument;
@@ -25,6 +29,8 @@ import com.avensys.cvparser.dto.UploadErrorListDTO;
 @Service
 @Component
 public class FileUploadService {
+	@Autowired
+	private Map<String, String> fileData;
 
 	//TODO: delete after test is done
 	@Autowired
@@ -34,6 +40,8 @@ public class FileUploadService {
 	public UploadErrorListDTO extractText(List<MultipartFile> files) throws IOException, TikaException, SAXException {
 //		Tika tika = new Tika();
 		List<UploadErrorDTO> errorList = new ArrayList<UploadErrorDTO>();
+
+//		Map<String, String> fileData = new HashMap<String, String>();
 		int successCount = 0, failCount = 0;
 		System.out.println("List: " + files);
 		for (MultipartFile file : files) {
@@ -120,7 +128,22 @@ public class FileUploadService {
 				errorList.add(error);
 			}
 //			System.out.println(text);
+			try {
+				String identifier = generateUniqueIdentifier(file);
+				
+				if(fileData.containsKey(identifier)) {
+					successCount--;
+					failCount++;
+					errorList.add(new UploadErrorDTO(fileName, "Duplicate file uploaded"));
+				}
+				
+				if (!fileData.containsKey(identifier)&&!text.equals("")) {
+					fileData.put(identifier, text);
+				}
 
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 //			InputStream stream = file.getInputStream();
 //			AutoDetectParser parser = new AutoDetectParser();
 //			BodyContentHandler handler = new BodyContentHandler();
@@ -131,7 +154,8 @@ public class FileUploadService {
 //			String text = handler.toString();
 //			System.out.println("Extracted Text: " + text);
 		}
-
+		System.out.println("File map size: " + fileData.size());
+		mapTest(fileData);
 //		  return tika.parseToString(file);
 		return new UploadErrorListDTO(errorList, successCount, failCount);
 	}
@@ -180,6 +204,22 @@ public class FileUploadService {
 			// Handle exception
 		}
 		return text;
+	}
+
+	public String generateUniqueIdentifier(MultipartFile file) throws NoSuchAlgorithmException, IOException {
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		byte[] hash = md.digest(file.getBytes());
+//		String filename = file.getOriginalFilename();
+		return Hex.encodeHexString(hash);
+	}
+
+	public void mapTest(Map<String, String> testMap) {
+		for (Map.Entry<String, String> entry : testMap.entrySet()) {
+			String key = entry.getKey();
+			String value = entry.getValue();
+//			System.out.println(key + " : " + value);
+			System.out.println(key);
+		}
 	}
 
 }
