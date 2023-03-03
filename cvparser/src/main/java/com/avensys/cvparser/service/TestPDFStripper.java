@@ -8,8 +8,10 @@ import java.util.regex.Pattern;
 
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.avensys.cvparser.data.CVKeywords;
+import com.avensys.cvparser.data.DocTextBox;
 
 public class TestPDFStripper extends PDFTextStripper {
 
@@ -17,86 +19,25 @@ public class TestPDFStripper extends PDFTextStripper {
 		super();
 	}
 
-	private HashMap<String, List<String>> headerGroup = new HashMap<>();
+	private HashMap<String, List<DocTextBox>> headerGroup = new HashMap<>();
 	private String activeHeader = "Filler";
 
-	private void checkAndAssignKeyword(String text, float xPos, float yPos) {
-//		System.out.println(CVKeywords.EXPERIENCE.getRegex());
-//		System.out.println(CVKeywords.EXPERIENCE.label);
+	private void checkAndAssignKeyword(String text, float xStart, float yStart, float xEnd, float yEnd) {
+
 		if (activeHeader.equals("Filler") && this.headerGroup.get(activeHeader) == null)
-			this.headerGroup.put(activeHeader, new ArrayList<String>());
+			this.headerGroup.put(activeHeader, new ArrayList<DocTextBox>());
 
 		for (CVKeywords keyword : CVKeywords.values()) {
 			if (text.split(" ").length < 6 && Pattern.matches(keyword.getRegex(), text)) {
 				activeHeader = keyword.label;
 				System.out.println("Matches " + keyword.label);
 				if (this.headerGroup.get(activeHeader) == null)
-					this.headerGroup.put(activeHeader, new ArrayList<String>());
+					this.headerGroup.put(activeHeader, new ArrayList<DocTextBox>());
 				break;
 			}
 		}
 		if (!text.strip().equals("")) {
-			this.headerGroup.get(activeHeader).add(text);
-		}
-	}
-
-	public void parseInformation() {
-		// TODO: Remove
-		for (String lister : this.headerGroup.keySet()) {
-			System.out.println("Key:" + lister + this.headerGroup.get(lister).toString());
-		}
-		if (this.headerGroup.get(CVKeywords.EXPERIENCE.label) != null) {
-			this.processExperience(this.headerGroup.get(CVKeywords.EXPERIENCE.label));
-		}
-		if (this.headerGroup.get(CVKeywords.SKILL.label) != null) {
-			this.processSkill(this.headerGroup.get(CVKeywords.SKILL.label));
-		}
-		if (this.headerGroup.get(CVKeywords.PERSONAL.label) != null) {
-			processPersonal(this.headerGroup.get(CVKeywords.PERSONAL.label));
-			
-		}
-		processPersonal(this.headerGroup.get("Filler"));
-
-	}
-
-	private void processExperience(List<String> experiences) {
-		for (int i = 0; i< experiences.size(); i++) {
-			String str = experiences.get(i).strip();
-			System.out.println(i+" "+str);
-			System.out.println(str.split(" ").length);
-			
-		}
-	}
-
-	/**
-	 * Searches for personal information such as Name, Email, and Mobile. Name searches run on the assumption that majority of names are First Line
-	 * @param personals
-	 */
-	private void processPersonal(List<String> personals) {
-		for (int i = 0; i< personals.size(); i++) {
-			String str = personals.get(i).strip();
-			System.out.println(i+" "+str);
-			System.out.println(str.split(" ").length);
-			if((str.split(" ").length >=2 && str.split(" ").length <6)&&!str.matches("^([\\s\\w,/.-]+)$")) {
-				System.out.println("Name Candidate: "+str);
-			}
-			if (str.toLowerCase().contains("mobile")) {
-				System.out.println("Mobile candidate: "+str);
-			}
-			if (str.toLowerCase().contains("email")) {
-				System.out.println("Email candidate: "+str);
-			}
-		}
-	}
-	
-	private void processSkill(List<String> skills) {
-		for(String line: skills) {
-			String subLine = line;
-			if (line.contains(":")) {
-				subLine = subLine.replaceAll(".*:", "");
-				
-			}
-			System.out.println(subLine.split("[\\W]*"));
+			this.headerGroup.get(activeHeader).add(new DocTextBox(text, xStart, xEnd, yStart, yEnd));
 		}
 	}
 
@@ -121,7 +62,7 @@ public class TestPDFStripper extends PDFTextStripper {
 //				System.out.println(
 //						"[%f,%f] to [%f,%f] ".formatted(xStart, yStart, xpos, ypos) + counter + ":" + sb.toString());
 
-				checkAndAssignKeyword(sb.toString(), xStart, yStart);
+				checkAndAssignKeyword(sb.toString(), xStart, yStart, xpos, ypos);
 
 				sb.delete(0, sb.length());
 				xStart = text.getXDirAdj();
@@ -141,16 +82,12 @@ public class TestPDFStripper extends PDFTextStripper {
 		}
 
 //		System.out.println("[%f,%f] to [%f,%f] ".formatted(xStart, yStart, xpos, ypos) + counter + ":" + sb.toString());
-		checkAndAssignKeyword(sb.toString(), xStart, yStart);
+		checkAndAssignKeyword(sb.toString(), xStart, yStart, xpos, ypos);
 
 	}
 
-	/**
-	 * Test Method: TODO: To be removed
-	 */
-	public void finalOutput() {
-		for (String lister : this.headerGroup.keySet()) {
-			System.out.println("Key:" + lister + this.headerGroup.get(lister).toString());
-		}
+	public HashMap<String, List<DocTextBox>> getHeaderGroup() {
+		return headerGroup;
 	}
+	
 }

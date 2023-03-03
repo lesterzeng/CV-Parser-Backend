@@ -170,7 +170,7 @@ public class FileUploadService {
 			testStripper.setSortByPosition(true);
 			testStripper.getText(document);
 //			testStripper.finalOutput();
-			testStripper.parseInformation();
+			testService.generateProfileData(testStripper.getHeaderGroup());
 			
 			// end of move
 			
