@@ -17,17 +17,23 @@ public class ParseController {
 	@Autowired
 	ParseService parser;
 	/**
-	 * API Call to handle parsing of files in the back end.
-	 * @param encodedData RequestBody of the HTTP Request mapped to {@link ParseRequestDTO}
+	 * API Call to handle parsing of singular file in the back end.
+	 * @param stringData is String representation of File Contents in UTF-8
 	 */
-	@PostMapping("upload")
-	public void parseFile(@RequestBody ParseRequestDTO encodedData) {
-		System.out.println(encodedData.getFileType());
-		parser.parseFiles(encodedData);
+	@PostMapping("docstring")
+	public void parseFile(@RequestBody String stringData) {
+		System.out.println(parser.parseFile(stringData));
 	}
 	
-	@PostMapping("filter")
-	public void filterFile(@RequestBody ParseRequestDTO encodedData) {
-		
+	/**
+	 * API Call to handle parsing of multiple files in the back end.
+	 * @param stringData is String Array representation of all File Contents in UTF-8
+	 */
+	@PostMapping("docstrings")
+	public void parseMultiFile(@RequestBody String stringData[]) {
+		for (String fileData: stringData) {
+			parser.parseFile(fileData);
+		}
 	}
+	
 }

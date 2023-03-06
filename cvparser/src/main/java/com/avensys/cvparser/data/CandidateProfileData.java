@@ -4,15 +4,46 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CandidateProfileData {
-	private String name;
-	private String email;
-	private String mobile;
+	private String name = null;
+	private String email = null;
+	private String mobile = null;
 	private List<String> skills = new ArrayList<>();
-	private List<String> pastCompanies = new ArrayList<>();
-	private int experienceYears;
-	
+	private List<PastCompanyData> pastCompanies = new ArrayList<>();
+	private int experienceYears = 0;
+
 	public CandidateProfileData() {
-		
+
+	}
+
+	public void build() {
+		if (this.name == null) {
+			this.name = "No Name";
+		}
+		if (this.email == null) {
+			this.email = "No Email";
+		}
+		if (this.mobile == null) {
+			this.mobile = "No Mobile";
+		}
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Name: " + this.name + "\n").append("Email: " + this.email + "\n")
+				.append("Mobile: " + this.mobile + "\n").append("Years of ExP: " + this.experienceYears + "\n");
+		int counter = 1;
+		for (String skill : this.skills) {
+			sb.append("Skill " + counter + ": " + skill+"\n");
+			counter++;
+		}
+		counter = 1;
+		for (PastCompanyData pcd : this.pastCompanies) {
+			sb.append(counter + ") " + pcd.toString()+"\n");
+			counter++;
+		}
+
+		return "Name: " + this.name + " Email: " + this.email + " Mobile: " + this.mobile;
 	}
 
 	public String getName() {
@@ -20,7 +51,8 @@ public class CandidateProfileData {
 	}
 
 	public void setName(String name) {
-		this.name = name;
+		if (this.name == null)
+			this.name = name;
 	}
 
 	public String getEmail() {
@@ -28,7 +60,8 @@ public class CandidateProfileData {
 	}
 
 	public void setEmail(String email) {
-		this.email = email;
+		if (this.email == null)
+			this.email = email;
 	}
 
 	public String getMobile() {
@@ -36,7 +69,8 @@ public class CandidateProfileData {
 	}
 
 	public void setMobile(String mobile) {
-		this.mobile = mobile;
+		if (this.mobile == null)
+			this.mobile = mobile;
 	}
 
 	public List<String> getSkills() {
@@ -47,11 +81,11 @@ public class CandidateProfileData {
 		this.skills = skills;
 	}
 
-	public List<String> getPastCompanies() {
+	public List<PastCompanyData> getPastCompanies() {
 		return pastCompanies;
 	}
 
-	public void setPastCompanies(List<String> pastCompanies) {
+	public void setPastCompanies(List<PastCompanyData> pastCompanies) {
 		this.pastCompanies = pastCompanies;
 	}
 
@@ -62,5 +96,5 @@ public class CandidateProfileData {
 	public void setExperienceYears(int experienceYears) {
 		this.experienceYears = experienceYears;
 	}
-	
+
 }

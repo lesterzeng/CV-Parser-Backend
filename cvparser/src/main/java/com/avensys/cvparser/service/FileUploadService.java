@@ -67,7 +67,7 @@ public class FileUploadService {
 				try {
 					if (file.getOriginalFilename().endsWith(".pdf")) {
 						text = processPdf(file);
-						testService.parsePdfFile(text);
+						testService.parseFile(text);
 						successCount++;
 					} else {
 						failCount++;
@@ -164,16 +164,6 @@ public class FileUploadService {
 		String text = "";
 		try (final PDDocument document = PDDocument.load(file.getInputStream())) {
 			final PDFTextStripper pdfStripper = new PDFTextStripper();
-			
-			// TODO: Move this to parser
-			TestPDFStripper testStripper = new TestPDFStripper();
-			testStripper.setSortByPosition(true);
-			testStripper.getText(document);
-//			testStripper.finalOutput();
-			testService.generateProfileData(testStripper.getHeaderGroup());
-			
-			// end of move
-			
 			text = pdfStripper.getText(document);
 		} catch (final Exception ex) {
 			ex.printStackTrace();

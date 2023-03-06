@@ -1,112 +1,352 @@
 package com.avensys.cvparser.service;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Base64;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
 
 import com.avensys.cvparser.data.CVKeywords;
 import com.avensys.cvparser.data.CandidateProfileData;
 import com.avensys.cvparser.data.DocTextBox;
-import com.avensys.cvparser.dto.ParseRequestDTO;
 
+/**
+ * Service class that parses CV Content and generates CandidateProfileData.
+ * 
+ * @author User
+ *
+ */
 @Service
 public class ParseService {
-	public void parseFiles(ParseRequestDTO prd) {
-		System.out.println("Method Called");
-		if (prd.getFileType() == "application/pdf")
-			System.out.println("pdf found");
-		try {
-			parsePdfFile(prd.getEncodedData());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 
-	public String parsePdfFile(String fileData) throws IOException {
-		String[] lineBreak = fileData.split("\n");
-		int counter = 0;
-		for (String line : lineBreak) {
-//			System.out.println("%d: %s".formatted(counter,line));
-			counter++;
-		}
-		return null;
-	}
-
-	public CandidateProfileData generateProfileData(HashMap<String, List<DocTextBox>> headerGroup) {
-		// TODO: Remove
-		for (String lister : headerGroup.keySet()) {
-			System.out.println("Key:" + lister + headerGroup.get(lister).toString());
-		}
-		if (headerGroup.get(CVKeywords.WORK.label) != null) {
-			this.processWork(headerGroup.get(CVKeywords.WORK.label));
-		}
-		if (headerGroup.get(CVKeywords.EXPERIENCE.label) != null) {
-			this.processExperience(headerGroup.get(CVKeywords.EXPERIENCE.label));
-		}
-		if (headerGroup.get(CVKeywords.SKILL.label) != null) {
-			this.processSkill(headerGroup.get(CVKeywords.SKILL.label));
-		}
-		if (headerGroup.get(CVKeywords.PERSONAL.label) != null) {
-			processPersonal(headerGroup.get(CVKeywords.PERSONAL.label));
-
-		}
-		processPersonal(headerGroup.get("Filler"));
-
-		return new CandidateProfileData();
-	}
-
-	
-
-	private void processExperience(List<DocTextBox> experiences) {
-		for (int i = 0; i < experiences.size(); i++) {
-			String str = experiences.get(i).getText().strip();
-			System.out.println(i + " " + str);
-
-		}
-	}
-
-	private void processWork(List<DocTextBox> works) {
-
+	/**
+	 * Reads a single file's contents as a single string separated by line breaks.
+	 * Parsing is done on the assumption that all lines are in visual order. i.e.
+	 * lines at the top of the document are at the start of the string and lines at
+	 * the bottom are at the end of the string.
+	 * 
+	 * @param contents contents is a String representation of the entire document
+	 * @return a {@link CandidateProfileData} object containing all the compiled
+	 *         information.
+	 */
+	public CandidateProfileData parseFile(String contents) {
+		return parseFile(contents.split("\n"));
 	}
 
 	/**
-	 * Searches for personal information such as Name, Email, and Mobile. Name
-	 * searches run on the assumption that majority of names are First Line
+	 * Reads a single file's contents as a String array where each entry is a line
+	 * in the document. Parsing is done on the assumption that all lines are in
+	 * visual order. i.e. lines at the top of the document are at the start of the
+	 * array and lines at the bottom are at the end of the array.
+	 * 
+	 * @param contents contents is a String Array representation of the entire
+	 *                 document line-by-line
+	 * @return A {@link CandidateProfileData} object containing all the compiled
+	 *         information.
+	 */
+	public CandidateProfileData parseFile(String[] contents) {
+		String activeHeader = "Filler";
+		HashMap<String, List<DocTextBox>> headerGroup = new HashMap<>();
+
+		for (String line : contents) {
+			activeHeader = checkAndAssignKeyword(line, activeHeader, headerGroup);
+		}
+		return generateProfileData(headerGroup);
+	}
+
+	/**
+	 * Sorting Helper Method that searches for keywords to find Header sections and
+	 * assigns the relevant text boxes/lines to the Headers. This method deals in
+	 * Header search and textbox assignments only.
+	 * 
+	 * @param line         String representation of current line in document to sort
+	 *                     and assign.
+	 * @param activeHeader String representation of current header to assign found
+	 *                     textboxes
+	 * @param headerGroup  HashMap with key of String representation of Header
+	 *                     Keyword, and value of a List of {@link DocTextBox}
+	 *                     representing the textboxes assigned to the header
+	 * @return String representation of current or new activeHeader value to be used
+	 *         in future calls of this method.
+	 */
+	private String checkAndAssignKeyword(String line, String activeHeader,
+			HashMap<String, List<DocTextBox>> headerGroup) {
+		String outputHeader = activeHeader;
+		String subLine = line.strip();
+//		System.out.println("Test: " + subLine + " Header:" + activeHeader);
+		if (outputHeader.equals("Filler") && !headerGroup.containsKey(outputHeader))
+			headerGroup.put(outputHeader, new ArrayList<DocTextBox>());
+
+		for (CVKeywords keyword : CVKeywords.values()) {
+			if (subLine.split(" ").length < 6 && Pattern.matches(keyword.getRegex(), subLine)) {
+				outputHeader = keyword.label;
+//				System.out.println("Matches " + keyword.label + "\nSource: " + subLine);
+//				System.out.println(outputHeader);
+				if (!headerGroup.containsKey(outputHeader)) {
+//					System.out.println("Header added");
+					headerGroup.put(outputHeader, new ArrayList<DocTextBox>());
+				}
+				break;
+			}
+		}
+		if (!subLine.strip().equals("")) {
+			headerGroup.get(activeHeader).add(new DocTextBox(subLine));
+		}
+
+		return outputHeader;
+	}
+
+//	private void checkAndAssignKeyword(String text) {
+//
+//		if (activeHeader.equals("Filler") && this.headerGroup.get(activeHeader) == null)
+//			this.headerGroup.put(activeHeader, new ArrayList<DocTextBox>());
+//
+//		for (CVKeywords keyword : CVKeywords.values()) {
+//			if (text.split(" ").length < 6 && Pattern.matches(keyword.getRegex(), text)) {
+//				activeHeader = keyword.label;
+//				System.out.println("Matches " + keyword.label);
+//				if (this.headerGroup.get(activeHeader) == null)
+//					this.headerGroup.put(activeHeader, new ArrayList<DocTextBox>());
+//				break;
+//			}
+//		}
+//		if (!text.strip().equals("")) {
+//			this.headerGroup.get(activeHeader).add(new DocTextBox(text));
+//		}
+//	}
+
+	/**
+	 * Method used to generate {@link CandidateProfileData} attribute values by
+	 * searching sorted Header Sections in a document. Used after running the
+	 * document through {@link #checkAndAssignKeyword(String, String, HashMap)}. See
+	 * {@link #parseFile(String[])} for implementation.
+	 * 
+	 * @param headerGroup HashMap with key of String representation of Header
+	 *                    Keyword, and value of a List of {@link DocTextBox}
+	 *                    representing the textboxes assigned to the header
+	 * @return A {@link CandidateProfileData} object containing all the compiled
+	 *         information.
+	 */
+	private CandidateProfileData generateProfileData(HashMap<String, List<DocTextBox>> headerGroup) {
+
+		CandidateProfileData output = new CandidateProfileData();
+		// TODO: Remove
+//		for (String lister : headerGroup.keySet()) {
+//			System.out.println("Key:" + lister + headerGroup.get(lister).toString());
+//		}
+		if (headerGroup.get(CVKeywords.WORK.label) != null) {
+			System.out.println("Work Process called");
+			this.processWork(headerGroup.get(CVKeywords.WORK.label), output);
+		}
+		if (headerGroup.get(CVKeywords.EXPERIENCE.label) != null) {
+			System.out.println("Experience Process Called");
+			this.processExperience(headerGroup.get(CVKeywords.EXPERIENCE.label), output);
+		}
+		if (headerGroup.get(CVKeywords.SKILL.label) != null) {
+			System.out.println("Skill Process Called");
+			this.processSkill(headerGroup.get(CVKeywords.SKILL.label), output);
+		}
+		if (headerGroup.get(CVKeywords.PERSONAL.label) != null) {
+			System.out.println("Personal Process Called");
+			processPersonal(headerGroup.get(CVKeywords.PERSONAL.label), output);
+
+		}
+		processPersonal(headerGroup.get("Filler"), output);
+		output.build();
+		return output;
+	}
+
+	/**
+	 * Seaches for years of experience.
+	 * 
+	 * @param experiences
+	 * @param cpd
+	 */
+	private void processExperience(List<DocTextBox> experiences, CandidateProfileData cpd) {
+		List<String> allDates = new ArrayList<>();
+		for (int i = 0; i < experiences.size(); i++) {
+			String str = experiences.get(i).getText().strip();
+//			System.out.println(i + " " + str);
+			List<String> dates = this.findDate(str);
+			if (dates != null) {
+				allDates.addAll(dates);
+			}
+			
+		}
+		System.out.println("Size of Experience:"+allDates.size());
+		for (int i=0; i <allDates.size(); i++) {
+			if (i==0)
+				continue;
+			
+			int[] prevDate = this.strToNumDate(allDates.get(i-1));
+			int[] currDate = this.strToNumDate(allDates.get(i));
+			System.out.println(Arrays.toString(prevDate));
+			System.out.println(Arrays.toString(currDate));
+			int dateCheck = currDate[0]-prevDate[0]+(currDate[1]-prevDate[1]*12);
+			if (dateCheck <0 ) {
+				continue;
+			} else {
+				if (dateCheck == 0)
+					dateCheck=1;
+				cpd.setExperienceYears(cpd.getExperienceYears()+Math.round(dateCheck/12f));
+			}
+			
+			
+		}
+	}
+
+	/**
+	 * Searches for Previous 3 Companies
+	 * 
+	 * @param works
+	 * @param cpd
+	 */
+	private void processWork(List<DocTextBox> works, CandidateProfileData cpd) {
+		for (int i = 0; i < works.size(); i++) {
+			String str = works.get(i).getText().strip();
+			System.out.println(i + " " + str);
+		}
+	}
+
+	/**
+	 * Searches for personal information such as Name, Email, and Mobile.
 	 * 
 	 * @param personals
+	 * @param cpd
 	 */
-	private void processPersonal(List<DocTextBox> personals) {
+	private void processPersonal(List<DocTextBox> personals, CandidateProfileData cpd) {
 		for (int i = 0; i < personals.size(); i++) {
 			String str = personals.get(i).getText().strip();
-			System.out.println(i + " " + str);
-			System.out.println(str.split(" ").length);
+//			System.out.println(i + " " + str);
+//			System.out.println(str.split(" ").length);
+
+			// Process Name
 			if ((str.split(" ").length >= 2 && str.split(" ").length < 6) || !str.matches("^([\\s\\w,/.-]+)$")) {
-				System.out.println("Name Candidate: " + str);
+				cpd.setName(str);
+//				System.out.println("Name Candidate: " + str);
 			}
-			if (str.toLowerCase().contains("mobile") || str.contains("+65") || str.contains("+ 65")) {
-				System.out.println("Mobile candidate: " + str);
+
+			// Process Mobile
+			if (str.toLowerCase().contains("mobile") || str.toLowerCase().contains("phone") || str.contains("+65")
+					|| str.contains("+ 65")) {
+				String mobileStr = str.replaceAll("[^\\d\\s+-]", "");
+
+				cpd.setMobile(mobileStr);
+//				System.out.println("Mobile candidate: " + str);
+//				System.out.println(mobileStr);
 			}
+
+			// Process Email
 			if (str.toLowerCase().contains("email") || str.matches(".*@.+[.]com.*")) {
+				Matcher regexMatch = Pattern.compile(".*@.+[.]com.*").matcher(str);
+				String emailStr = null;
+				if (regexMatch.find()) {
+					emailStr = regexMatch.group();
+					System.out.println("Cropped"+emailStr);
+				}
+				emailStr = str.replaceAll("(?i)e(-)?mail[\\W]*", "");
+				
+
+				cpd.setEmail(emailStr);
 				System.out.println("Email candidate: " + str);
+				System.out.println(emailStr);
 			}
 		}
 	}
 
-	private void processSkill(List<DocTextBox> skills) {
+	/**
+	 * Searches for list of skills and appends to an array
+	 * 
+	 * @param skills
+	 * @param cpd
+	 */
+	private void processSkill(List<DocTextBox> skills, CandidateProfileData cpd) {
 		for (DocTextBox line : skills) {
 			String subLine = line.getText().strip();
 			if (subLine.contains(":")) {
-				subLine = subLine.replaceAll(".*:", "");
+				subLine = subLine.replaceAll(".*:\s*", "");
 
 			}
-			System.out.println(subLine.split("[\\W]*"));
+			System.out.println("Preprocess:" + subLine);
+			String[] splitText = subLine.split("(?i)[^\\w\\s]|(and)");
+			System.out.println("Skill Test:");
+			for (String s : splitText) {
+				System.out.println("Skill:" + s.strip());
+				cpd.getSkills().add(s.strip());
+			}
 		}
+	}
+
+	/**
+	 * Helper method to search for and extract date formats in CV Documents
+	 * 
+	 * @param line String representation of a line to examine
+	 * @return
+	 */
+	private List<String> findDate(String line) {
+		System.out.println("Date Called: "+line);
+		Matcher checker = Pattern.compile("(\\d\\d[ -/])?([\\w]{3,9}|\\d\\d)[ -/](\\d{4}|\\d{2})").matcher(line);
+		List<String> output = new ArrayList<>();
+		while (checker.find()) {
+			System.out.println("Checker Group:"+checker.group());
+			output.add(checker.group());
+		}
+		if (output.size() == 0) {
+			System.out.println("Line Failed");
+			return null;
+		}
+		else {
+			if (line.toLowerCase().contains("current")||line.toLowerCase().contains("present")) {
+				String[] currDate = LocalDate.now().toString().split("-");
+				output.add(currDate[2]+"-"+currDate[1]);
+			}
+				
+			return output;
+		}
+			
+	}
+
+	/**
+	 * Helper method to convert Dates from String format to integer array values for
+	 * calculations.
+	 * 
+	 * @param date
+	 * @return int[] representing { month, year } in integer value.
+	 */
+	private int[] strToNumDate(String date) {
+		String[] allMonthFormat = new String[] { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
+				"nov", "dec", "january", "february", "march", "april", "may", "june", "july", "august", "september",
+				"october", "november", "december" };
+
+		int[] output = new int[2];
+		String[] dateFormat = date.split("[ -/]");
+		// TODO: Remove this section:
+		for (String s : dateFormat) {
+			System.out.println(s);
+		}
+		int formatLength = dateFormat.length;
+		if (formatLength > 2) {
+			dateFormat = new String[] { dateFormat[1], dateFormat[2] };
+		}
+		output[1] = Integer.parseInt(dateFormat[1]);
+		if (dateFormat[0].matches("\\d*")) {
+			output[0] = Integer.parseInt(dateFormat[0]);
+		} else {
+			for (int i = 0; i < allMonthFormat.length; i++) {
+				if (allMonthFormat[i].toLowerCase().equals(dateFormat[0])) {
+					output[0] = i < 12 ? i + 1 : i - 11;
+					break;
+				}
+			}
+			if (output[0] == 0) {
+				output[0] = 1;
+			}
+		}
+		return output;
 	}
 }

@@ -1,7 +1,7 @@
 package com.avensys.cvparser.data;
 
 /**
- * Data class storing 
+ * Data class storing information regarding document text boxes. Currently used as a placeholder for future additions to CV Parsing algorithm.
  * @author User
  *
  */
@@ -14,6 +14,16 @@ public class DocTextBox {
 
 	private float xMid;
 	private float yMid;
+	
+	public DocTextBox(String text) {
+		this.text = text;
+		this.xStart = -1f;
+		this.xEnd = -1f;
+		this.yStart = -1f;
+		this.yEnd = -1f;
+		this.xMid = -1f;
+		this.yMid = -1f;
+	}
 
 	public DocTextBox(String text, float xStart, float xEnd, float yStart, float yEnd) {
 		this.text = text;

@@ -13,6 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.avensys.cvparser.data.CVKeywords;
 import com.avensys.cvparser.data.DocTextBox;
 
+/**
+ * Experimental Class. Do not use!<br>
+ * Extends PDFBox's PDFTextStripper and overwrites the writeString() method to determine the text box's x and y-coordinates. This functionality can be used
+ * to further improve the CV Parsing mechanics.
+ * @author User
+ *
+ */
 public class TestPDFStripper extends PDFTextStripper {
 
 	public TestPDFStripper() throws IOException {
@@ -50,24 +57,18 @@ public class TestPDFStripper extends PDFTextStripper {
 		float yStart = 0;
 		float xpos = 0;
 		float ypos = 0;
-		float fontSize = 0;
-		String[] keywords = new String[] { "experience", "" };
 		for (TextPosition text : textPositions) {
 			if (sb.isEmpty()) {
 				xStart = text.getXDirAdj();
 				yStart = text.getYDirAdj();
-				fontSize = text.getFontSize();
 			}
 			if ((text.getXDirAdj() - xpos > limits || text.getYDirAdj() > ypos) && !sb.isEmpty()) {
-//				System.out.println(
-//						"[%f,%f] to [%f,%f] ".formatted(xStart, yStart, xpos, ypos) + counter + ":" + sb.toString());
 
 				checkAndAssignKeyword(sb.toString(), xStart, yStart, xpos, ypos);
 
 				sb.delete(0, sb.length());
 				xStart = text.getXDirAdj();
 				yStart = text.getYDirAdj();
-				fontSize = text.getFontSize();
 				counter++;
 			}
 			xpos = text.getXDirAdj();
