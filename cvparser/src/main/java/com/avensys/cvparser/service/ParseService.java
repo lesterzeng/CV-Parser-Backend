@@ -50,7 +50,7 @@ public class ParseService {
 	 *         information.
 	 */
 	public CandidateProfileData parseFile(String[] contents) {
-		String activeHeader = "Filler";
+		String activeHeader = CVKeywords.PERSONAL.label;
 		HashMap<String, List<DocTextBox>> headerGroup = new HashMap<>();
 
 		for (String line : contents) {
@@ -78,8 +78,8 @@ public class ParseService {
 			HashMap<String, List<DocTextBox>> headerGroup) {
 		String outputHeader = activeHeader;
 		String subLine = line.strip();
-//		System.out.println("Test: " + subLine + " Header:" + activeHeader);
-		if (outputHeader.equals("Filler") && !headerGroup.containsKey(outputHeader))
+		System.out.println("Test: " + subLine + " Header:" + activeHeader);
+		if (outputHeader.equals(CVKeywords.PERSONAL.label) && !headerGroup.containsKey(outputHeader))
 			headerGroup.put(outputHeader, new ArrayList<DocTextBox>());
 
 		for (CVKeywords keyword : CVKeywords.values()) {
@@ -136,9 +136,9 @@ public class ParseService {
 
 		CandidateProfileData output = new CandidateProfileData();
 		// TODO: Remove
-//		for (String lister : headerGroup.keySet()) {
-//			System.out.println("Key:" + lister + headerGroup.get(lister).toString());
-//		}
+		for (String lister : headerGroup.keySet()) {
+			System.out.println("Key:" + lister + headerGroup.get(lister).toString());
+		}
 		if (headerGroup.get(CVKeywords.WORK.label) != null) {
 			System.out.println("Work Process called");
 			this.processWork(headerGroup.get(CVKeywords.WORK.label), output);
@@ -156,7 +156,7 @@ public class ParseService {
 			processPersonal(headerGroup.get(CVKeywords.PERSONAL.label), output);
 
 		}
-		processPersonal(headerGroup.get("Filler"), output);
+//		processPersonal(headerGroup.get("Filler"), output);
 		output.build();
 		return output;
 	}
@@ -176,27 +176,29 @@ public class ParseService {
 			if (dates != null) {
 				allDates.addAll(dates);
 			}
-			
+
 		}
-		System.out.println("Size of Experience:"+allDates.size());
-		for (int i=0; i <allDates.size(); i++) {
-			if (i==0)
+		System.out.println("Size of Experience:" + allDates.size());
+		for (int i = 0; i < allDates.size(); i++) {
+			if (i == 0)
 				continue;
-			
-			int[] prevDate = this.strToNumDate(allDates.get(i-1));
+
+			int[] prevDate = this.strToNumDate(allDates.get(i - 1));
 			int[] currDate = this.strToNumDate(allDates.get(i));
-			System.out.println(Arrays.toString(prevDate));
-			System.out.println(Arrays.toString(currDate));
-			int dateCheck = currDate[0]-prevDate[0]+(currDate[1]-prevDate[1]*12);
-			if (dateCheck <0 ) {
+			System.out.println("PrevDate" + Arrays.toString(prevDate));
+			System.out.println("CurrDate" + Arrays.toString(currDate));
+			int dateCheck = currDate[0] - prevDate[0] + (currDate[1] - prevDate[1]) * 12;
+			if (dateCheck < 0) {
+				System.out.println("Negative Date Calculation");
 				continue;
 			} else {
+				System.out.println(dateCheck);
 				if (dateCheck == 0)
-					dateCheck=1;
-				cpd.setExperienceYears(cpd.getExperienceYears()+Math.round(dateCheck/12f));
+					dateCheck = 1;
+				cpd.setExperienceYears(cpd.getExperienceYears() + Math.round(dateCheck / 12f));
+				System.out.println(cpd.getExperienceYears());
 			}
-			
-			
+
 		}
 	}
 
@@ -220,14 +222,26 @@ public class ParseService {
 	 * @param cpd
 	 */
 	private void processPersonal(List<DocTextBox> personals, CandidateProfileData cpd) {
+		System.out.println("ProcessPersonal Called");
 		for (int i = 0; i < personals.size(); i++) {
 			String str = personals.get(i).getText().strip();
-//			System.out.println(i + " " + str);
-//			System.out.println(str.split(" ").length);
+			System.out.println("Personal: " + i + " " + str);
+			System.out.println(str.split(" ").length);
 
 			// Process Name
 			if ((str.split(" ").length >= 2 && str.split(" ").length < 6) || !str.matches("^([\\s\\w,/.-]+)$")) {
-				cpd.setName(str);
+				String[] nameSplit = str.split(" ");
+
+				if (nameSplit.length > 2) {
+					StringBuilder sb = new StringBuilder();
+					for (int j = 1; j < nameSplit.length - 1; j++) {
+						sb.append(nameSplit[j] + " ");
+					}
+					cpd.setMiddleName(sb.toString().trim());
+				}
+
+				cpd.setFirstName(nameSplit[0]);
+				cpd.setLastName(nameSplit[nameSplit.length - 1]);
 //				System.out.println("Name Candidate: " + str);
 			}
 
@@ -237,8 +251,8 @@ public class ParseService {
 				String mobileStr = str.replaceAll("[^\\d\\s+-]", "");
 
 				cpd.setMobile(mobileStr);
-//				System.out.println("Mobile candidate: " + str);
-//				System.out.println(mobileStr);
+				System.out.println("Mobile candidate: " + str);
+				System.out.println(mobileStr);
 			}
 
 			// Process Email
@@ -247,10 +261,9 @@ public class ParseService {
 				String emailStr = null;
 				if (regexMatch.find()) {
 					emailStr = regexMatch.group();
-					System.out.println("Cropped"+emailStr);
+					System.out.println("Cropped" + emailStr);
 				}
 				emailStr = str.replaceAll("(?i)e(-)?mail[\\W]*", "");
-				
 
 				cpd.setEmail(emailStr);
 				System.out.println("Email candidate: " + str);
@@ -272,11 +285,11 @@ public class ParseService {
 				subLine = subLine.replaceAll(".*:\s*", "");
 
 			}
-			System.out.println("Preprocess:" + subLine);
+//			System.out.println("Preprocess:" + subLine);
 			String[] splitText = subLine.split("(?i)[^\\w\\s]|(and)");
-			System.out.println("Skill Test:");
+//			System.out.println("Skill Test:");
 			for (String s : splitText) {
-				System.out.println("Skill:" + s.strip());
+//				System.out.println("Skill:" + s.strip());
 				cpd.getSkills().add(s.strip());
 			}
 		}
@@ -289,26 +302,26 @@ public class ParseService {
 	 * @return
 	 */
 	private List<String> findDate(String line) {
-		System.out.println("Date Called: "+line);
-		Matcher checker = Pattern.compile("(\\d\\d[ -/])?([\\w]{3,9}|\\d\\d)[ -/](\\d{4}|\\d{2})").matcher(line);
+//		System.out.println("Date Called: "+line);
+		Matcher checker = Pattern.compile("(?i)\\b(\\d{2}[ -/])?([a-z]{3,9}|\\d{2})[ -/](\\d{4}|\\d{2})\\b")
+				.matcher(line.trim());
 		List<String> output = new ArrayList<>();
 		while (checker.find()) {
-			System.out.println("Checker Group:"+checker.group());
+			System.out.println("Checker Group:" + checker.group());
 			output.add(checker.group());
 		}
 		if (output.size() == 0) {
-			System.out.println("Line Failed");
+//			System.out.println("Line Failed");
 			return null;
-		}
-		else {
-			if (line.toLowerCase().contains("current")||line.toLowerCase().contains("present")) {
+		} else {
+			if (line.toLowerCase().contains("current") || line.toLowerCase().contains("present")) {
 				String[] currDate = LocalDate.now().toString().split("-");
-				output.add(currDate[2]+"-"+currDate[1]);
+				output.add(currDate[1] + "-" + currDate[0]);
 			}
-				
+
 			return output;
 		}
-			
+
 	}
 
 	/**
@@ -319,6 +332,7 @@ public class ParseService {
 	 * @return int[] representing { month, year } in integer value.
 	 */
 	private int[] strToNumDate(String date) {
+		System.out.println("InputDate: " + date);
 		String[] allMonthFormat = new String[] { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
 				"nov", "dec", "january", "february", "march", "april", "may", "june", "july", "august", "september",
 				"october", "november", "december" };
@@ -326,20 +340,21 @@ public class ParseService {
 		int[] output = new int[2];
 		String[] dateFormat = date.split("[ -/]");
 		// TODO: Remove this section:
-		for (String s : dateFormat) {
-			System.out.println(s);
-		}
+		System.out.println("DateFormat: " + Arrays.toString(dateFormat));
+
 		int formatLength = dateFormat.length;
 		if (formatLength > 2) {
 			dateFormat = new String[] { dateFormat[1], dateFormat[2] };
 		}
 		output[1] = Integer.parseInt(dateFormat[1]);
-		if (dateFormat[0].matches("\\d*")) {
+		if (dateFormat[0].matches("\\d{2}")) {
 			output[0] = Integer.parseInt(dateFormat[0]);
 		} else {
 			for (int i = 0; i < allMonthFormat.length; i++) {
-				if (allMonthFormat[i].toLowerCase().equals(dateFormat[0])) {
+				if (allMonthFormat[i].equals(dateFormat[0].toLowerCase().trim())) {
+					System.out.println("Match month:" + allMonthFormat[i]);
 					output[0] = i < 12 ? i + 1 : i - 11;
+
 					break;
 				}
 			}
