@@ -1,5 +1,7 @@
 package com.avensys.cvparser.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.avensys.cvparser.dto.ParseRequestDTO;
+import com.avensys.cvparser.entity.CandidateEntity;
 import com.avensys.cvparser.service.ParseService;
 
 @RestController
@@ -34,6 +37,11 @@ public class ParseController {
 		for (String fileData: stringData) {
 			parser.parseFile(fileData);
 		}
+	}
+	
+	@PostMapping("uploaded")
+	public List<CandidateEntity> parseUploadedFile() {
+		return parser.parseMultipleFiles();
 	}
 	
 }

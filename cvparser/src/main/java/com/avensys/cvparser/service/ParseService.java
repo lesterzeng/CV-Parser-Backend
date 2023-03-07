@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.avensys.cvparser.data.CVKeywords;
@@ -25,6 +27,17 @@ import com.avensys.cvparser.data.DocTextBox;
 @Service
 public class ParseService {
 
+	@Autowired
+	Map<String,String> fileData;
+	/**
+	 * Reads all files stored in {@link FileData}
+	 * @return
+	 */
+	public List<CandidateEntity> parseMultipleFiles(){
+		System.out.println(fileData.values().size());
+		System.out.println("Method Called Successfully");
+		return null;
+	}
 	/**
 	 * Reads a single file's contents as a single string separated by line breaks.
 	 * Parsing is done on the assumption that all lines are in visual order. i.e.
@@ -294,6 +307,9 @@ public class ParseService {
 //				System.out.println("Skill:" + s.strip());
 				Skill skillItem = new Skill();
 				skillItem.setSkill_description(s.strip());
+				if (ce.getSkills()==null) {
+					ce.setSkills(new ArrayList<Skill>());
+				}
 				ce.getSkills().add(skillItem);
 			}
 		}
