@@ -115,6 +115,22 @@ public class CandidateEntity extends Auditable<String> {
 		this.jobsList = jobsList;
 	}
 	
-	
+	public void build() {
+		if (this.firstName == null) {
+			this.firstName = "No Name";
+		}
+		if (this.midName == null) {
+			this.midName = "No Name";
+		}
+		if (this.lastName == null) {
+			this.lastName = "No Name";
+		}
+		if (this.email == null) {
+			this.email = "No Email";
+		}
+		if (this.phoneNumber == null) {
+			this.phoneNumber = "No Mobile";
+		}
+	}
 
 }

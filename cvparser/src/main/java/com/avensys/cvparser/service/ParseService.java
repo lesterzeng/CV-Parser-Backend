@@ -12,11 +12,12 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
 import com.avensys.cvparser.data.CVKeywords;
-import com.avensys.cvparser.data.CandidateProfileData;
+import com.avensys.cvparser.entity.CandidateEntity;
+import com.avensys.cvparser.entity.Skill;
 import com.avensys.cvparser.data.DocTextBox;
 
 /**
- * Service class that parses CV Content and generates CandidateProfileData.
+ * Service class that parses CV Content and generates {@link CandidateEntity}
  * 
  * @author User
  *
@@ -31,10 +32,10 @@ public class ParseService {
 	 * the bottom are at the end of the string.
 	 * 
 	 * @param contents contents is a String representation of the entire document
-	 * @return a {@link CandidateProfileData} object containing all the compiled
+	 * @return a {@link CandidateEntity} object containing all the compiled
 	 *         information.
 	 */
-	public CandidateProfileData parseFile(String contents) {
+	public CandidateEntity parseFile(String contents) {
 		return parseFile(contents.split("\n"));
 	}
 
@@ -46,10 +47,10 @@ public class ParseService {
 	 * 
 	 * @param contents contents is a String Array representation of the entire
 	 *                 document line-by-line
-	 * @return A {@link CandidateProfileData} object containing all the compiled
+	 * @return A {@link CandidateEntity} object containing all the compiled
 	 *         information.
 	 */
-	public CandidateProfileData parseFile(String[] contents) {
+	public CandidateEntity parseFile(String[] contents) {
 		String activeHeader = CVKeywords.PERSONAL.label;
 		HashMap<String, List<DocTextBox>> headerGroup = new HashMap<>();
 
@@ -121,20 +122,20 @@ public class ParseService {
 //	}
 
 	/**
-	 * Method used to generate {@link CandidateProfileData} attribute values by
-	 * searching sorted Header Sections in a document. Used after running the
-	 * document through {@link #checkAndAssignKeyword(String, String, HashMap)}. See
+	 * Method used to generate {@link CandidateEntity} attribute values by searching
+	 * sorted Header Sections in a document. Used after running the document through
+	 * {@link #checkAndAssignKeyword(String, String, HashMap)}. See
 	 * {@link #parseFile(String[])} for implementation.
 	 * 
 	 * @param headerGroup HashMap with key of String representation of Header
 	 *                    Keyword, and value of a List of {@link DocTextBox}
 	 *                    representing the textboxes assigned to the header
-	 * @return A {@link CandidateProfileData} object containing all the compiled
+	 * @return A {@link CandidateEntity} object containing all the compiled
 	 *         information.
 	 */
-	private CandidateProfileData generateProfileData(HashMap<String, List<DocTextBox>> headerGroup) {
+	private CandidateEntity generateProfileData(HashMap<String, List<DocTextBox>> headerGroup) {
 
-		CandidateProfileData output = new CandidateProfileData();
+		CandidateEntity output = new CandidateEntity();
 		// TODO: Remove
 		for (String lister : headerGroup.keySet()) {
 			System.out.println("Key:" + lister + headerGroup.get(lister).toString());
@@ -165,9 +166,9 @@ public class ParseService {
 	 * Seaches for years of experience.
 	 * 
 	 * @param experiences
-	 * @param cpd
+	 * @param ce
 	 */
-	private void processExperience(List<DocTextBox> experiences, CandidateProfileData cpd) {
+	private void processExperience(List<DocTextBox> experiences, CandidateEntity ce) {
 		List<String> allDates = new ArrayList<>();
 		for (int i = 0; i < experiences.size(); i++) {
 			String str = experiences.get(i).getText().strip();
@@ -195,8 +196,8 @@ public class ParseService {
 				System.out.println(dateCheck);
 				if (dateCheck == 0)
 					dateCheck = 1;
-				cpd.setExperienceYears(cpd.getExperienceYears() + Math.round(dateCheck / 12f));
-				System.out.println(cpd.getExperienceYears());
+				ce.setWorkExp(ce.getWorkExp() + Math.round(dateCheck / 12f));
+				System.out.println(ce.getWorkExp());
 			}
 
 		}
@@ -206,9 +207,9 @@ public class ParseService {
 	 * Searches for Previous 3 Companies
 	 * 
 	 * @param works
-	 * @param cpd
+	 * @param ce
 	 */
-	private void processWork(List<DocTextBox> works, CandidateProfileData cpd) {
+	private void processWork(List<DocTextBox> works, CandidateEntity ce) {
 		for (int i = 0; i < works.size(); i++) {
 			String str = works.get(i).getText().strip();
 			System.out.println(i + " " + str);
@@ -219,9 +220,9 @@ public class ParseService {
 	 * Searches for personal information such as Name, Email, and Mobile.
 	 * 
 	 * @param personals
-	 * @param cpd
+	 * @param ce
 	 */
-	private void processPersonal(List<DocTextBox> personals, CandidateProfileData cpd) {
+	private void processPersonal(List<DocTextBox> personals, CandidateEntity ce) {
 		System.out.println("ProcessPersonal Called");
 		for (int i = 0; i < personals.size(); i++) {
 			String str = personals.get(i).getText().strip();
@@ -229,7 +230,9 @@ public class ParseService {
 			System.out.println(str.split(" ").length);
 
 			// Process Name
-			if ((str.split(" ").length >= 2 && str.split(" ").length < 6) || !str.matches("^([\\s\\w,/.-]+)$")) {
+			if ((ce.getFirstName() == null && ce.getLastName() == null)
+					&& ((str.split(" ").length >= 2 && str.split(" ").length < 6)
+							|| !str.matches("^([\\s\\w,/.-]+)$"))) {
 				String[] nameSplit = str.split(" ");
 
 				if (nameSplit.length > 2) {
@@ -237,26 +240,25 @@ public class ParseService {
 					for (int j = 1; j < nameSplit.length - 1; j++) {
 						sb.append(nameSplit[j] + " ");
 					}
-					cpd.setMiddleName(sb.toString().trim());
+					ce.setMidName(sb.toString().trim());
 				}
-
-				cpd.setFirstName(nameSplit[0]);
-				cpd.setLastName(nameSplit[nameSplit.length - 1]);
+				ce.setFirstName(nameSplit[0]);
+				ce.setLastName(nameSplit[nameSplit.length - 1]);
 //				System.out.println("Name Candidate: " + str);
 			}
 
 			// Process Mobile
-			if (str.toLowerCase().contains("mobile") || str.toLowerCase().contains("phone") || str.contains("+65")
-					|| str.contains("+ 65")) {
+			if (ce.getPhoneNumber() == null && (str.toLowerCase().contains("mobile") || str.toLowerCase().contains("phone")
+					|| str.contains("+65") || str.contains("+ 65"))) {
 				String mobileStr = str.replaceAll("[^\\d\\s+-]", "");
 
-				cpd.setMobile(mobileStr);
+				ce.setPhoneNumber(mobileStr);
 				System.out.println("Mobile candidate: " + str);
 				System.out.println(mobileStr);
 			}
 
 			// Process Email
-			if (str.toLowerCase().contains("email") || str.matches(".*@.+[.]com.*")) {
+			if (ce.getEmail() == null && (str.toLowerCase().contains("email") || str.matches(".*@.+[.]com.*"))) {
 				Matcher regexMatch = Pattern.compile(".*@.+[.]com.*").matcher(str);
 				String emailStr = null;
 				if (regexMatch.find()) {
@@ -265,7 +267,7 @@ public class ParseService {
 				}
 				emailStr = str.replaceAll("(?i)e(-)?mail[\\W]*", "");
 
-				cpd.setEmail(emailStr);
+				ce.setEmail(emailStr);
 				System.out.println("Email candidate: " + str);
 				System.out.println(emailStr);
 			}
@@ -276,9 +278,9 @@ public class ParseService {
 	 * Searches for list of skills and appends to an array
 	 * 
 	 * @param skills
-	 * @param cpd
+	 * @param ce
 	 */
-	private void processSkill(List<DocTextBox> skills, CandidateProfileData cpd) {
+	private void processSkill(List<DocTextBox> skills, CandidateEntity ce) {
 		for (DocTextBox line : skills) {
 			String subLine = line.getText().strip();
 			if (subLine.contains(":")) {
@@ -290,7 +292,9 @@ public class ParseService {
 //			System.out.println("Skill Test:");
 			for (String s : splitText) {
 //				System.out.println("Skill:" + s.strip());
-				cpd.getSkills().add(s.strip());
+				Skill skillItem = new Skill();
+				skillItem.setSkill_description(s.strip());
+				ce.getSkills().add(skillItem);
 			}
 		}
 	}
