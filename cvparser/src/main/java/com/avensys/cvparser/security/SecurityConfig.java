@@ -79,8 +79,8 @@ public class SecurityConfig {
 				 * application. This means that users will have to provide a valid username and
 				 * password in order to access any resources on the application.
 				 */
-				// TODO: Change api parse to authenticated section
-				.requestMatchers("/api/auth/**","/api/parse/**","/api/upload/**").permitAll()
+				
+				.requestMatchers("/api/auth/**").permitAll()
 				
 //				.hasRole("ADMIN")
 //				.hasAnyRole("USER","ADMIN")

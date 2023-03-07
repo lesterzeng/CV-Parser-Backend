@@ -32,11 +32,6 @@ public class FileUploadService {
 	@Autowired
 	private Map<String, String> fileData;
 
-	//TODO: delete after test is done
-	@Autowired
-	ParseService testService;
-	//end of delete
-	
 	public UploadErrorListDTO extractText(List<MultipartFile> files) throws IOException, TikaException, SAXException {
 //		Tika tika = new Tika();
 		List<UploadErrorDTO> errorList = new ArrayList<UploadErrorDTO>();
@@ -67,7 +62,6 @@ public class FileUploadService {
 				try {
 					if (file.getOriginalFilename().endsWith(".pdf")) {
 						text = processPdf(file);
-						
 						successCount++;
 					} else {
 						failCount++;
