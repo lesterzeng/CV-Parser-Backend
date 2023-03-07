@@ -79,7 +79,7 @@ public class SecurityConfig {
 				 * application. This means that users will have to provide a valid username and
 				 * password in order to access any resources on the application.
 				 */
-
+				
 				.requestMatchers("/api/auth/**").permitAll()
 				
 //				.hasRole("ADMIN")

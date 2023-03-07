@@ -158,6 +158,7 @@ public class FileUploadService {
 		String text = "";
 		try (final PDDocument document = PDDocument.load(file.getInputStream())) {
 			final PDFTextStripper pdfStripper = new PDFTextStripper();
+			pdfStripper.setSortByPosition(true);
 			text = pdfStripper.getText(document);
 		} catch (final Exception ex) {
 			ex.printStackTrace();
@@ -174,6 +175,7 @@ public class FileUploadService {
 			if (filename.endsWith(".doc")) {
 				HWPFDocument doc = new HWPFDocument(is);
 				WordExtractor extractor = new WordExtractor(doc);
+				
 				text = extractor.getText();
 			} else if (filename.endsWith(".docx")) {
 				XWPFDocument doc = new XWPFDocument(is);
