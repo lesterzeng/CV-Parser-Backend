@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.avensys.cvparser.data.CVKeywords;
 import com.avensys.cvparser.entity.CandidateEntity;
+import com.avensys.cvparser.entity.RecentCompanies;
 import com.avensys.cvparser.entity.Skill;
 import com.avensys.cvparser.data.DocTextBox;
 
@@ -28,12 +29,14 @@ import com.avensys.cvparser.data.DocTextBox;
 public class ParseService {
 
 	@Autowired
-	Map<String,String> fileData;
+	Map<String, String> fileData;
+
 	/**
 	 * Reads all files stored in {@link FileData}
+	 * 
 	 * @return
 	 */
-	public List<CandidateEntity> parseMultipleFiles(){
+	public List<CandidateEntity> parseMultipleFiles() {
 		System.out.println(fileData.values().size());
 		System.out.println("Method Called Successfully");
 		List<CandidateEntity> output = new ArrayList<>();
@@ -42,6 +45,7 @@ public class ParseService {
 		}
 		return output;
 	}
+
 	/**
 	 * Reads a single file's contents as a single string separated by line breaks.
 	 * Parsing is done on the assumption that all lines are in visual order. i.e.
@@ -157,13 +161,14 @@ public class ParseService {
 		for (String lister : headerGroup.keySet()) {
 			System.out.println("Key:" + lister + headerGroup.get(lister).toString());
 		}
-		if (headerGroup.get(CVKeywords.WORK.label) != null) {
-			System.out.println("Work Process called");
-			this.processWork(headerGroup.get(CVKeywords.WORK.label), output);
-		}
+//		if (headerGroup.get(CVKeywords.WORK.label) != null) {
+//			System.out.println("Work Process called");
+//			this.processWork(headerGroup.get(CVKeywords.WORK.label), output);
+//		}
 		if (headerGroup.get(CVKeywords.EXPERIENCE.label) != null) {
 			System.out.println("Experience Process Called");
 			this.processExperience(headerGroup.get(CVKeywords.EXPERIENCE.label), output);
+			this.processWork(headerGroup.get(CVKeywords.EXPERIENCE.label), output);
 		}
 		if (headerGroup.get(CVKeywords.SKILL.label) != null) {
 			System.out.println("Skill Process Called");
@@ -180,10 +185,14 @@ public class ParseService {
 	}
 
 	/**
-	 * Seaches for years of experience.
+	 * Searches for years of experience and updates it in a
+	 * {@link CandidateEntity}.<br>
+	 * Assumptions: Dates are either Start - End or Start - (Present | Current);
 	 * 
-	 * @param experiences
-	 * @param ce
+	 * @param experiences List of {@link DocTextBox} to perform the search for
+	 *                    information.
+	 * @param ce          {@link CandidateEntity} that is used to hold the extracted
+	 *                    information.
 	 */
 	private void processExperience(List<DocTextBox> experiences, CandidateEntity ce) {
 		List<String> allDates = new ArrayList<>();
@@ -221,30 +230,68 @@ public class ParseService {
 	}
 
 	/**
-	 * Searches for Previous 3 Companies
+	 * Searches for Previous 3 Companies <br>
+	 * Assumptions: Company Name Appears on Same Line as Date for Work Experience OR
+	 * Company Name Appears 1 Line Above Date for Work Experience
 	 * 
-	 * @param works
-	 * @param ce
+	 * @param works List of {@link DocTextBox} to perform the search for
+	 *              information.
+	 * @param ce    {@link CandidateEntity} that is used to hold the extracted
+	 *              information.
 	 */
 	private void processWork(List<DocTextBox> works, CandidateEntity ce) {
-		for (int i = 0; i < works.size(); i++) {
+		for (int i = 1; i < works.size(); i++) {
+			String prevLine = works.get(i - 1).getText().strip();
+			;
+
 			String str = works.get(i).getText().strip();
 			System.out.println(i + " " + str);
+			if (this.findDate(str) != null) {
+				RecentCompanies rc = new RecentCompanies();
+				String dateRegex = "(?i)\\W*\\b((\\d{2}[ -/])?([a-z]{3,9}|\\d{2})[ -/](\\d{4}|\\d{2})|present|current)\\b\\W*";
+				String textCheck = str.replaceAll(dateRegex, "");
+				System.out.println("textCheck:" + textCheck);
+				if (textCheck.split(" ").length > 0 && textCheck != "") {
+					rc.setCompany_name(textCheck);
+				} else {
+					rc.setCompany_name(prevLine.replaceAll(dateRegex, ""));
+				}
+				if (this.findDate(str).size() > 1) {
+					rc.setJoin_year(this.strToNumDate(this.findDate(str).get(0))[1]);
+					rc.setLeave_year(this.strToNumDate(this.findDate(str).get(1))[1]);
+				} else {
+					rc.setJoin_year(this.strToNumDate(this.findDate(str).get(0))[1]);
+					if (i + 1 < works.size() && this.findDate(works.get(i + 1).getText().strip()) != null) {
+						rc.setLeave_year(
+								this.strToNumDate(this.findDate(works.get(i + 1).getText().strip()).get(0))[1]);
+					}
+				}
+				if (ce.getRecentCompanies() == null) {
+					ce.setRecentCompanies(new ArrayList<RecentCompanies>());
+				}
+				ce.getRecentCompanies().add(rc);
+				if (ce.getRecentCompanies().size() >=3)
+					break;
+			}
 		}
 	}
 
 	/**
-	 * Searches for personal information such as Name, Email, and Mobile.
+	 * Searches for personal information such as Name, Email, and Mobile. <br>
+	 * Assumptions: Names appear as the First Line on a Document; Names are in the
+	 * format of FirstName - MiddleName(s) - LastName;
 	 * 
-	 * @param personals
-	 * @param ce
+	 * @param personals List of {@link DocTextBox} to perform the search for
+	 *                  information.
+	 * @param ce        {@link CandidateEntity} that is used to hold the extracted
+	 *                  information.
 	 */
 	private void processPersonal(List<DocTextBox> personals, CandidateEntity ce) {
 		System.out.println("ProcessPersonal Called");
 		for (int i = 0; i < personals.size(); i++) {
 			String str = personals.get(i).getText().strip();
-			System.out.println("Personal: " + i + " " + str);
-			System.out.println(str.split(" ").length);
+//			System.out.println("Personal: " + i + " " + str);
+//			System.out.println(str.split(" ").length);
 
 			// Process Name
 			if ((ce.getFirstName() == null && ce.getLastName() == null)
@@ -257,7 +304,7 @@ public class ParseService {
 					for (int j = 1; j < nameSplit.length - 1; j++) {
 						sb.append(nameSplit[j] + " ");
 					}
-					ce.setMidName(sb.toString().trim());
+					ce.setMidName(sb.toString().strip());
 				}
 				ce.setFirstName(nameSplit[0]);
 				ce.setLastName(nameSplit[nameSplit.length - 1]);
@@ -265,13 +312,13 @@ public class ParseService {
 			}
 
 			// Process Mobile
-			if (ce.getPhoneNumber() == null && (str.toLowerCase().contains("mobile") || str.toLowerCase().contains("phone")
-					|| str.contains("+65") || str.contains("+ 65"))) {
+			if (ce.getPhoneNumber() == null && (str.toLowerCase().contains("mobile")
+					|| str.toLowerCase().contains("phone") || str.contains("+65") || str.contains("+ 65"))) {
 				String mobileStr = str.replaceAll("[^\\d\\s+-]", "");
 
 				ce.setPhoneNumber(mobileStr);
-				System.out.println("Mobile candidate: " + str);
-				System.out.println(mobileStr);
+//				System.out.println("Mobile candidate: " + str);
+//				System.out.println(mobileStr);
 			}
 
 			// Process Email
@@ -285,17 +332,21 @@ public class ParseService {
 				emailStr = str.replaceAll("(?i)e(-)?mail[\\W]*", "");
 
 				ce.setEmail(emailStr);
-				System.out.println("Email candidate: " + str);
-				System.out.println(emailStr);
+//				System.out.println("Email candidate: " + str);
+//				System.out.println(emailStr);
 			}
 		}
 	}
 
 	/**
-	 * Searches for list of skills and appends to an array
+	 * Searches for list of skills and appends to an array <br>
+	 * Assumptions: All skills are separated by a special character, or a line
+	 * break; Anything in the skills header section is a relevant skill;
 	 * 
-	 * @param skills
-	 * @param ce
+	 * @param skills List of {@link DocTextBox} to perform the search for
+	 *               information.
+	 * @param ce     {@link CandidateEntity} that is used to hold the extracted
+	 *               information.
 	 */
 	private void processSkill(List<DocTextBox> skills, CandidateEntity ce) {
 		for (DocTextBox line : skills) {
@@ -311,7 +362,7 @@ public class ParseService {
 //				System.out.println("Skill:" + s.strip());
 				Skill skillItem = new Skill();
 				skillItem.setSkill_description(s.strip());
-				if (ce.getSkills()==null) {
+				if (ce.getSkills() == null) {
 					ce.setSkills(new ArrayList<Skill>());
 				}
 				ce.getSkills().add(skillItem);
@@ -323,15 +374,16 @@ public class ParseService {
 	 * Helper method to search for and extract date formats in CV Documents
 	 * 
 	 * @param line String representation of a line to examine
-	 * @return
+	 * @return List of Strings representing all date formats that were found, or
+	 *         null if none were found.
 	 */
 	private List<String> findDate(String line) {
 //		System.out.println("Date Called: "+line);
 		Matcher checker = Pattern.compile("(?i)\\b(\\d{2}[ -/])?([a-z]{3,9}|\\d{2})[ -/](\\d{4}|\\d{2})\\b")
-				.matcher(line.trim());
+				.matcher(line.strip());
 		List<String> output = new ArrayList<>();
 		while (checker.find()) {
-			System.out.println("Checker Group:" + checker.group());
+//			System.out.println("Checker Group:" + checker.group());
 			output.add(checker.group());
 		}
 		if (output.size() == 0) {
@@ -352,11 +404,11 @@ public class ParseService {
 	 * Helper method to convert Dates from String format to integer array values for
 	 * calculations.
 	 * 
-	 * @param date
-	 * @return int[] representing { month, year } in integer value.
+	 * @param date String representation of the date to convert
+	 * @return integer array representing { month, year } as integer values.
 	 */
 	private int[] strToNumDate(String date) {
-		System.out.println("InputDate: " + date);
+//		System.out.println("InputDate: " + date);
 		String[] allMonthFormat = new String[] { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
 				"nov", "dec", "january", "february", "march", "april", "may", "june", "july", "august", "september",
 				"october", "november", "december" };
@@ -364,7 +416,7 @@ public class ParseService {
 		int[] output = new int[2];
 		String[] dateFormat = date.split("[ -/]");
 		// TODO: Remove this section:
-		System.out.println("DateFormat: " + Arrays.toString(dateFormat));
+//		System.out.println("DateFormat: " + Arrays.toString(dateFormat));
 
 		int formatLength = dateFormat.length;
 		if (formatLength > 2) {
@@ -375,8 +427,8 @@ public class ParseService {
 			output[0] = Integer.parseInt(dateFormat[0]);
 		} else {
 			for (int i = 0; i < allMonthFormat.length; i++) {
-				if (allMonthFormat[i].equals(dateFormat[0].toLowerCase().trim())) {
-					System.out.println("Match month:" + allMonthFormat[i]);
+				if (allMonthFormat[i].equals(dateFormat[0].toLowerCase().strip())) {
+//					System.out.println("Match month:" + allMonthFormat[i]);
 					output[0] = i < 12 ? i + 1 : i - 11;
 
 					break;
