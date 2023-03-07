@@ -205,4 +205,8 @@ public class FileUploadService {
 		}
 	}
 
+	public void cancelUpload() {
+		fileData.clear();
+	}
+
 }
