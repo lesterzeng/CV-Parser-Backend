@@ -29,6 +29,8 @@ import com.avensys.cvparser.security.JWTGenerator;
 import com.avensys.cvparser.security.SecurityConstants;
 import com.avensys.cvparser.service.AuthService;
 
+import jakarta.servlet.http.Cookie;
+
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/api/auth")
@@ -99,6 +101,10 @@ public class AuthController {
 			Date expireDate = new Date(currentDate.getTime() + SecurityConstants.JWT_EXPIRATION);
 			System.out.println("Token in Controller/Login:" + token);
 			return new ResponseEntity<>(new AuthResponseDTO("success", token, expireDate), HttpStatus.OK);
+			
+			
+	
+	        
 		} catch (BadCredentialsException e) {
 			return new ResponseEntity<>(new AuthResponseDTO("failure", "Invalid username or password"),
 					HttpStatus.UNAUTHORIZED);

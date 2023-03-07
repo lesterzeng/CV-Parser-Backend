@@ -1,5 +1,6 @@
 package com.avensys.cvparser.service;
 
+<<<<<<< Updated upstream
 import java.util.List;
 import java.util.Optional;
 
@@ -66,3 +67,8 @@ public class CandidateService {
     }
 
 }
+=======
+public class CandidateService {
+
+}
+>>>>>>> Stashed changes
