@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.avensys.cvparser.dto.ParseRequestDTO;
+import com.avensys.cvparser.dto.ParseResponseDTO;
 import com.avensys.cvparser.entity.CandidateEntity;
 import com.avensys.cvparser.service.ParseService;
 
@@ -38,6 +38,11 @@ public class ParseController {
 			parser.parseFile(fileData);
 		}
 	}
+	
+//	@PostMapping("uploaded")
+//	public ParseResponseDTO parseUploadedFile() {
+//		return new ParseResponseDTO(parser.parseMultipleFiles()) ;
+//	}
 	
 	@PostMapping("uploaded")
 	public List<CandidateEntity> parseUploadedFile() {

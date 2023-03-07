@@ -36,7 +36,11 @@ public class ParseService {
 	public List<CandidateEntity> parseMultipleFiles(){
 		System.out.println(fileData.values().size());
 		System.out.println("Method Called Successfully");
-		return null;
+		List<CandidateEntity> output = new ArrayList<>();
+		for (String fileStringData : fileData.values()) {
+			output.add(parseFile(fileStringData));
+		}
+		return output;
 	}
 	/**
 	 * Reads a single file's contents as a single string separated by line breaks.

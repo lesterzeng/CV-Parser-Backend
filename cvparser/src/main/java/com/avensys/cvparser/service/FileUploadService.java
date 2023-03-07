@@ -139,7 +139,6 @@ public class FileUploadService {
 				
 				if (!fileData.containsKey(identifier)&&!text.equals("")) {
 					fileData.put(identifier, text);
-					System.out.println( testService.parseFile(text));
 				}
 
 			} catch (Exception e) {
