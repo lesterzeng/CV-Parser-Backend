@@ -1,5 +1,6 @@
 package com.avensys.cvparser.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import com.avensys.cvparser.dto.CandidateDTO;
 import com.avensys.cvparser.entity.CandidateEntity;
 import com.avensys.cvparser.repo.CandidateRepo;
 
@@ -45,9 +47,19 @@ public class CandidateService {
         return cr.findByWorkExp(workExp);
     }
 
-    public CandidateEntity add(CandidateEntity cand) {
-        cr.save(cand);
-        return cand;
+    public CandidateDTO add(List<CandidateEntity> cand) {
+    	CandidateDTO candDTO  = new CandidateDTO();
+    	for(CandidateEntity candEntity: cand) {
+    		if(cr.existsByFirstName(candEntity.getFirstName()) && cr.existsByLastName(candEntity.getLastName()) && cr.existsByEmail(candEntity.getEmail())) {
+
+    
+    			candDTO.getDuplicateList().add(candEntity);
+    			
+    		} else {
+    			cr.save(candEntity);
+    			candDTO.getSuccessList().add(candEntity);
+    		}
+    	} return candDTO;
     }
 
     public void editCandidateData(Long id, CandidateEntity cand) {

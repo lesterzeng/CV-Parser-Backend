@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.avensys.cvparser.dto.CandidateDTO;
 import com.avensys.cvparser.entity.CandidateEntity;
 import com.avensys.cvparser.entity.UserEntity;
 import com.avensys.cvparser.service.CandidateService;
@@ -79,7 +80,7 @@ public class CandidateController {
 //	}
 	
 	@PostMapping(CANDIDATE_API_PATH)
-	public CandidateEntity addCandidate(@RequestBody CandidateEntity cand) {
+	public CandidateDTO addCandidate(@RequestBody List<CandidateEntity> cand) {
 		return cs.add(cand);
 	}
 

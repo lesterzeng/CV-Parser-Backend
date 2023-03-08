@@ -20,7 +20,14 @@ public interface CandidateRepo extends CrudRepository<CandidateEntity, Long> {
 	public List<CandidateEntity> findByLastName(String lastName);
 	
 	public List<CandidateEntity> findByWorkExp(int workExp);
+
+	public void save(List<CandidateEntity> cand);
+
+	public boolean existsByFirstName(String firstName);
 	
+	public boolean existsByLastName(String lastName);
+	
+	public boolean existsByEmail(String email);
 	
 //	public Optional<CandidateEntity> findByFirstName(String firstName);
 //	
