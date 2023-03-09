@@ -100,7 +100,7 @@ public class FileUploadService {
 						successCount++;
 					} else {
 						failCount++;
-						UploadErrorDTO error = new UploadErrorDTO(fileName, "Unsupported file type: " + mimeType);
+						UploadErrorDTO error = new UploadErrorDTO(fileName, "Unsupported file type: " + extension);
 //					errorList.add("File "+fileName+" is of unsupported file type: "+mimeType);
 						errorList.add(error);
 					}
